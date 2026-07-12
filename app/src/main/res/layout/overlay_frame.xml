@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content">
+
+    <FrameLayout
+        android:id="@+id/bubbleContainer"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:visibility="visible">
+
+        <ImageView
+            android:id="@+id/ivBubble"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:background="@drawable/bg_bubble_idle"
+            android:src="@drawable/ic_mic"
+            android:tint="@color/white"
+            android:padding="14dp"
+            android:scaleType="fitCenter" />
+
+        <ImageView
+            android:id="@+id/ivBubbleMicStatus"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_gravity="bottom|end"
+            android:src="@drawable/ic_mic"
+            android:tint="@color/white"
+            android:background="@drawable/bg_badge"
+            android:padding="3dp" />
+    </FrameLayout>
+
+    <LinearLayout
+        android:id="@+id/panelContainer"
+        android:layout_width="220dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@drawable/bg_overlay_panel"
+        android:elevation="8dp"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingHorizontal="14dp"
+            android:paddingVertical="10dp">
+
+            <View
+                android:layout_width="8dp"
+                android:layout_height="8dp"
+                android:background="@drawable/bg_status_dot" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Voz ativa"
+                android:textColor="@color/white"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:paddingStart="8dp" />
+
+            <ImageButton
+                android:id="@+id/btnCollapse"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:src="@drawable/ic_chevron_down"
+                android:tint="@color/gray_400"
+                android:background="?attr/selectableItemBackgroundBorderless" />
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/divider" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:paddingVertical="14dp"
+            android:paddingHorizontal="8dp">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center">
+
+                <ImageButton
+                    android:id="@+id/btnMute"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:src="@drawable/ic_mic"
+                    android:tint="@color/white"
+                    android:background="@drawable/bg_control_btn" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Mudo"
+                    android:textColor="@color/gray_400"
+                    android:textSize="10sp"
+                    android:paddingTop="4dp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center">
+
+                <ImageButton
+                    android:id="@+id/btnDeafen"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:src="@drawable/ic_headset"
+                    android:tint="@color/white"
+                    android:background="@drawable/bg_control_btn" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Ensurdecer"
+                    android:textColor="@color/gray_400"
+                    android:textSize="10sp"
+                    android:paddingTop="4dp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center">
+
+                <ImageButton
+                    android:id="@+id/btnDisconnect"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:src="@drawable/ic_phone_off"
+                    android:tint="@color/white"
+                    android:background="@drawable/bg_control_btn_red" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Sair"
+                    android:textColor="@color/gray_400"
+                    android:textSize="10sp"
+                    android:paddingTop="4dp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="by rhyan57"
+            android:textColor="@color/gray_600"
+            android:textSize="10sp"
+            android:gravity="center"
+            android:paddingBottom="8dp" />
+    </LinearLayout>
+
+</FrameLayout>
