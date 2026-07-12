@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">SevenVoice</string>
+    <string name="login_xbox">Entrar com Xbox</string>
+    <string name="disconnect">Desconectar</string>
+    <string name="settings">Configurações</string>
+    <string name="add_server">Adicionar Servidor</string>
+    <string name="connect">Conectar</string>
+    <string name="by_rhyan">by rhyan57</string>
+</resources>
