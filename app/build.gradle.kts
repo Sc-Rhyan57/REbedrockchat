@@ -76,7 +76,7 @@ dependencies {
         exclude(group = "org.cloudburstmc.math", module = "api")
     }
 
-    implementation("net.raphimc:MinecraftAuth:5.0.1") {
+    implementation("net.raphimc:MinecraftAuth:4.1.2") {
         exclude(group = "org.slf4j")
     }
 
