@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="bg_dark">#111214</color>
+    <color name="bg_card">#1E2124</color>
+    <color name="bg_card_light">#2A2D31</color>
+    <color name="divider">#2C2F33</color>
+    <color name="white">#FFFFFF</color>
+    <color name="gray_300">#DCDDDE</color>
+    <color name="gray_400">#B9BBBE</color>
+    <color name="gray_500">#72767D</color>
+    <color name="gray_600">#4F545C</color>
+    <color name="green_400">#57F287</color>
+    <color name="green_700">#2D7D46</color>
+    <color name="red_400">#ED4245</color>
+    <color name="accent_blue">#5865F2</color>
+    <color name="xbox_green">#107C10</color>
+    <color name="overlay_bg">#CC1E2124</color>
+</resources>
