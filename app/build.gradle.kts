@@ -73,6 +73,7 @@ dependencies {
         exclude(group = "io.netty", module = "netty-transport-native-epoll")
         exclude(group = "io.netty", module = "netty-transport-native-kqueue")
         exclude(group = "io.netty.incubator", module = "netty-incubator-transport-native-io_uring")
+        exclude(group = "org.cloudburstmc.math", module = "api")
     }
 
     implementation("net.raphimc:MinecraftAuth:5.0.1") {
