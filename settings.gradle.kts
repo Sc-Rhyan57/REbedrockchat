@@ -5,15 +5,20 @@ pluginManagement {
         gradlePluginPortal()
     }
 }
+
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
         google()
         mavenCentral()
-        maven("https://repo.opencollab.dev/main/") { name = "opencollab" }
-        maven("https://repo.opencollab.dev/maven-snapshots/") { name = "opencollab-snapshots" }
-        maven("https://maven.lenni0451.net/releases") { name = "lenni0451" }
+        maven("https://repo.opencollab.dev/maven-snapshots/") {
+            name = "opencollab-snapshots"
+        }
+        maven("https://s01.oss.sonatype.org/content/repositories/snapshots/") {
+            name = "sonatype-oss-snapshots"
+        }
     }
 }
+
 rootProject.name = "SevenVoice"
 include(":app")
