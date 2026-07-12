@@ -4,8 +4,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import net.raphimc.minecraftauth.MinecraftAuth
 import net.raphimc.minecraftauth.java.JavaAuthManager
-import net.raphimc.minecraftauth.msa.MsaToken
-import net.raphimc.minecraftauth.xbox.XboxAuthManager
+import net.raphimc.minecraftauth.msa.model.MsaToken
 import org.geysermc.mcprotocollib.auth.GameProfile
 
 data class JavaCredentials(
@@ -18,14 +17,12 @@ class MinecraftAuthBridge {
     suspend fun getCredentials(msAccessToken: String): Result<JavaCredentials> = withContext(Dispatchers.IO) {
         runCatching {
             val httpClient = MinecraftAuth.createHttpClient()
-            val xboxAuthManager = XboxAuthManager.create(httpClient)
-            val xboxToken = xboxAuthManager.loginWithMsa(MsaToken(msAccessToken, 0L, "")).get()
-
+            val msaToken = MsaToken(msAccessToken, System.currentTimeMillis() + 3600000, "")
             val authManager = JavaAuthManager.create(httpClient)
-            authManager.loginWithXbox(xboxToken)
+            authManager.loginWithMsa(msaToken)
 
             val mcProfile = authManager.getMinecraftProfile().getUpToDate()
-            val mcToken = authManager.getMinecraftToken().getUpToDate()
+            val mcToken = authManager.getMinecraftAccessToken().getUpToDate()
 
             val profile = GameProfile(
                 mcProfile.id,
@@ -34,7 +31,7 @@ class MinecraftAuthBridge {
 
             JavaCredentials(
                 gameProfile = profile,
-                accessToken = mcToken.token
+                accessToken = mcToken.accessToken
             )
         }
     }
