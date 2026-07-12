@@ -3,6 +3,7 @@ package gg.sevenmc.voice.mc
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import net.raphimc.minecraftauth.MinecraftAuth
+import net.raphimc.minecraftauth.java.JavaAuthManager
 import org.geysermc.mcprotocollib.auth.GameProfile
 import java.util.UUID
 
@@ -16,20 +17,20 @@ class MinecraftAuthBridge {
     suspend fun getCredentials(msAccessToken: String): Result<JavaCredentials> = withContext(Dispatchers.IO) {
         runCatching {
             val httpClient = MinecraftAuth.createHttpClient()
-            val authManager = MinecraftAuth.javaAuth(httpClient)
+            val authManager = JavaAuthManager.create(httpClient)
             val result = authManager.loginWithMsa(msAccessToken)
 
             val mcProfile = result.getMinecraftProfile()
-            val mcToken = result.getMinecraftAccessToken()
+            val mcToken = result.getMinecraftToken()
 
             val profile = GameProfile(
-                parseUUID(mcProfile.id),
+                parseUUID(mcProfile.id.toString()),
                 mcProfile.name
             )
 
             JavaCredentials(
                 gameProfile = profile,
-                accessToken = mcToken.accessToken
+                accessToken = mcToken.token
             )
         }
     }
