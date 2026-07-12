@@ -13,11 +13,12 @@ android {
         targetSdk = 34
         versionCode = 1
         versionName = "1.0.0"
+        multiDexEnabled = true
     }
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -37,6 +38,34 @@ android {
     buildFeatures {
         viewBinding = true
     }
+
+    packaging {
+        resources {
+            excludes += setOf(
+                "META-INF/DEPENDENCIES",
+                "META-INF/LICENSE",
+                "META-INF/LICENSE.txt",
+                "META-INF/NOTICE",
+                "META-INF/NOTICE.txt",
+                "META-INF/INDEX.LIST",
+                "META-INF/io.netty.versions.properties",
+                "META-INF/*.kotlin_module",
+                "google/protobuf/*.proto"
+            )
+        }
+    }
+}
+
+repositories {
+    maven("https://repo.opencollab.dev/main/") {
+        name = "opencollab"
+    }
+    maven("https://repo.opencollab.dev/maven-snapshots/") {
+        name = "opencollab-snapshots"
+    }
+    maven("https://maven.lenni0451.net/releases") {
+        name = "lenni0451"
+    }
 }
 
 dependencies {
@@ -50,4 +79,23 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
     implementation("com.google.code.gson:gson:2.10.1")
     implementation("androidx.datastore:datastore-preferences:1.0.0")
+    implementation("androidx.multidex:multidex:2.0.1")
+
+    implementation("org.geysermc.mcprotocollib:protocol:1.21.4-1") {
+        exclude(group = "io.netty", module = "netty-transport-native-epoll")
+        exclude(group = "io.netty", module = "netty-transport-native-kqueue")
+        exclude(group = "io.netty.incubator", module = "netty-incubator-transport-native-io_uring")
+    }
+
+    implementation("net.raphimc:MinecraftAuth:4.0.5") {
+        exclude(group = "org.slf4j")
+    }
+
+    implementation("net.kyori:adventure-api:4.17.0")
+    implementation("net.kyori:adventure-text-serializer-plain:4.17.0")
+
+    implementation("io.netty:netty-all:4.1.108.Final") {
+        exclude(group = "io.netty", module = "netty-transport-native-epoll")
+        exclude(group = "io.netty", module = "netty-transport-native-kqueue")
+    }
 }
