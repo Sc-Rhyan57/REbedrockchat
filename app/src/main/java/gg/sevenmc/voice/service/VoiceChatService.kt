@@ -11,19 +11,13 @@ import android.os.Binder
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import gg.sevenmc.voice.R
+import gg.sevenmc.voice.mc.VoiceChatConnector
 import gg.sevenmc.voice.network.AudioCapture
 import gg.sevenmc.voice.network.AudioPlayback
 import gg.sevenmc.voice.network.ConnectionState
 import gg.sevenmc.voice.network.VoiceChatConnection
-import gg.sevenmc.voice.network.VoiceServerConfig
 import gg.sevenmc.voice.overlay.OverlayService
 import gg.sevenmc.voice.ui.MainActivity
-import gg.sevenmc.voice.util.ServerEntry
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
-import java.util.UUID
 
 class VoiceChatService : Service() {
 
@@ -32,10 +26,10 @@ class VoiceChatService : Service() {
     }
 
     private val binder = LocalBinder()
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
-    private var connection: VoiceChatConnection? = null
+    private var connector: VoiceChatConnector? = null
     private val capture = AudioCapture()
     private val playback = AudioPlayback()
+    private var currentState = ConnectionState.DISCONNECTED
     private var isMuted = false
     private var isDeafened = false
 
@@ -48,10 +42,12 @@ class VoiceChatService : Service() {
         const val ACTION_CONNECT = "gg.sevenmc.voice.CONNECT"
         const val ACTION_DISCONNECT = "gg.sevenmc.voice.DISCONNECT"
         const val EXTRA_HOST = "host"
+        const val EXTRA_PORT = "port"
+        const val EXTRA_SERVER_NAME = "server_name"
+        const val EXTRA_MS_TOKEN = "ms_token"
+        const val EXTRA_PLAYER_UUID = "player_uuid"
         const val EXTRA_VOICE_PORT = "voice_port"
         const val EXTRA_SECRET = "secret"
-        const val EXTRA_PLAYER_UUID = "player_uuid"
-        const val EXTRA_SERVER_NAME = "server_name"
     }
 
     override fun onCreate() {
@@ -63,14 +59,20 @@ class VoiceChatService : Service() {
         when (intent?.action) {
             ACTION_CONNECT -> {
                 val host = intent.getStringExtra(EXTRA_HOST) ?: return START_NOT_STICKY
-                val voicePort = intent.getIntExtra(EXTRA_VOICE_PORT, 24454)
-                val secretStr = intent.getStringExtra(EXTRA_SECRET) ?: ""
-                val uuidStr = intent.getStringExtra(EXTRA_PLAYER_UUID) ?: UUID.randomUUID().toString()
+                val port = intent.getIntExtra(EXTRA_PORT, 25565)
                 val serverName = intent.getStringExtra(EXTRA_SERVER_NAME) ?: "Server"
-                val secret = secretStr.toByteArray(Charsets.UTF_8).copyOf(32)
-                val playerUuid = runCatching { UUID.fromString(uuidStr) }.getOrElse { UUID.randomUUID() }
+                val msToken = intent.getStringExtra(EXTRA_MS_TOKEN)
+
                 startForeground(NOTIF_ID, buildNotification(serverName, "Conectando..."))
-                connect(host, voicePort, secret, playerUuid, serverName)
+
+                if (msToken != null) {
+                    connectWithJavaLogin(host, port, serverName, msToken)
+                } else {
+                    val voicePort = intent.getIntExtra(EXTRA_VOICE_PORT, 24454)
+                    val secretStr = intent.getStringExtra(EXTRA_SECRET) ?: ""
+                    val uuidStr = intent.getStringExtra(EXTRA_PLAYER_UUID) ?: ""
+                    connectDirectUDP(host, voicePort, secretStr, uuidStr, serverName)
+                }
             }
             ACTION_DISCONNECT -> {
                 disconnect()
@@ -80,31 +82,74 @@ class VoiceChatService : Service() {
         return START_NOT_STICKY
     }
 
-    private fun connect(host: String, port: Int, secret: ByteArray, uuid: UUID, serverName: String) {
-        val config = VoiceServerConfig(host, port, secret, uuid)
-        connection = VoiceChatConnection(config).also { conn ->
-            conn.onStateChange = { state ->
-                onStateChange?.invoke(state)
-                updateNotification(serverName, stateLabel(state))
-                if (state == ConnectionState.CONNECTED) {
-                    startAudio(conn)
-                    startOverlay()
-                }
-                if (state == ConnectionState.DISCONNECTED || state == ConnectionState.ERROR) {
-                    stopAudio()
-                }
+    private fun connectWithJavaLogin(
+        host: String,
+        port: Int,
+        serverName: String,
+        msToken: String
+    ) {
+        val entry = gg.sevenmc.voice.util.ServerEntry(
+            name = serverName,
+            host = host,
+            port = port
+        )
+
+        val conn = VoiceChatConnector(entry, msToken)
+        connector = conn
+
+        conn.onStateChange = { state, label ->
+            currentState = state
+            onStateChange?.invoke(state)
+            updateNotification(serverName, label)
+        }
+
+        conn.onVoiceReady = { voice ->
+            startAudio(voice)
+            startOverlay()
+        }
+
+        conn.connect()
+    }
+
+    private fun connectDirectUDP(
+        host: String,
+        voicePort: Int,
+        secretStr: String,
+        uuidStr: String,
+        serverName: String
+    ) {
+        val secret = secretStr.toByteArray(Charsets.UTF_8).copyOf(32)
+        val uuid = runCatching { java.util.UUID.fromString(uuidStr) }.getOrElse { java.util.UUID.randomUUID() }
+
+        val config = gg.sevenmc.voice.network.VoiceServerConfig(host, voicePort, secret, uuid)
+        val voice = gg.sevenmc.voice.network.VoiceChatConnection(config)
+
+        voice.onStateChange = { state ->
+            currentState = state
+            onStateChange?.invoke(state)
+            updateNotification(serverName, stateLabel(state))
+            if (state == ConnectionState.CONNECTED) {
+                startAudio(voice)
+                startOverlay()
             }
-            conn.onVoiceReceived = { pcm, _ ->
-                if (!isDeafened) playback.playFrame(pcm)
+            if (state == ConnectionState.DISCONNECTED || state == ConnectionState.ERROR) {
+                stopAudio()
             }
         }
-        scope.launch(Dispatchers.IO) {
-            connection?.connect()
+        voice.onVoiceReceived = { pcm, _ ->
+            if (!isDeafened) playback.playFrame(pcm)
+        }
+
+        kotlinx.coroutines.GlobalScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            voice.connect()
         }
     }
 
     private fun startAudio(conn: VoiceChatConnection) {
         playback.start()
+        conn.onVoiceReceived = { pcm, _ ->
+            if (!isDeafened) playback.playFrame(pcm)
+        }
         capture.onFrameCaptured = { frame ->
             if (!isMuted) {
                 conn.sendVoiceData(frame)
@@ -121,15 +166,15 @@ class VoiceChatService : Service() {
     }
 
     private fun startOverlay() {
-        val intent = Intent(this, OverlayService::class.java)
-        startService(intent)
+        startService(Intent(this, OverlayService::class.java))
     }
 
     fun disconnect() {
-        connection?.disconnect()
-        connection = null
+        connector?.disconnect()
+        connector = null
         stopAudio()
         stopService(Intent(this, OverlayService::class.java))
+        currentState = ConnectionState.DISCONNECTED
     }
 
     fun toggleMute() {
@@ -147,7 +192,7 @@ class VoiceChatService : Service() {
 
     fun isMuted() = isMuted
     fun isDeafened() = isDeafened
-    fun getState() = connection?.getState() ?: ConnectionState.DISCONNECTED
+    fun getState() = currentState
 
     private fun stateLabel(state: ConnectionState) = when (state) {
         ConnectionState.CONNECTED -> "Conectado"
