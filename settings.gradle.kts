@@ -11,12 +11,7 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
-        maven("https://repo.opencollab.dev/maven-snapshots/") {
-            name = "opencollab-snapshots"
-        }
-        maven("https://s01.oss.sonatype.org/content/repositories/snapshots/") {
-            name = "sonatype-oss-snapshots"
-        }
+        maven("https://jitpack.io")
     }
 }
 
