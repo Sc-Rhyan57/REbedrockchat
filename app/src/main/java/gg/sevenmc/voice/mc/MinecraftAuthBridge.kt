@@ -4,8 +4,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import net.raphimc.minecraftauth.MinecraftAuth
 import net.raphimc.minecraftauth.java.JavaAuthManager
-import net.raphimc.minecraftauth.msa.model.MsaToken
+import net.raphimc.minecraftauth.msa.MsaToken
 import org.geysermc.mcprotocollib.auth.GameProfile
+import java.util.UUID
 
 data class JavaCredentials(
     val gameProfile: GameProfile,
@@ -25,7 +26,7 @@ class MinecraftAuthBridge {
             val mcToken = authManager.getMinecraftAccessToken().getUpToDate()
 
             val profile = GameProfile(
-                mcProfile.id,
+                parseUUID(mcProfile.id),
                 mcProfile.name
             )
 
@@ -33,6 +34,19 @@ class MinecraftAuthBridge {
                 gameProfile = profile,
                 accessToken = mcToken.accessToken
             )
+        }
+    }
+
+    private fun parseUUID(id: String): UUID {
+        return try {
+            UUID.fromString(id)
+        } catch (e: Exception) {
+            val sb = StringBuilder(id)
+            sb.insert(8, "-")
+            sb.insert(13, "-")
+            sb.insert(18, "-")
+            sb.insert(23, "-")
+            UUID.fromString(sb.toString())
         }
     }
 }
