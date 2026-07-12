@@ -1,6 +1,6 @@
 # SevenVoice
 
-**by rhyan57** • [dsc.gg/sevenmc7](https://dsc.gg/sevenmc7)
+**by NULL(NOT ME!!)** • [dsc.gg/sevenmc7](https://dsc.gg/sevenmc7)
 
 Aplicativo Android que conecta jogadores de Minecraft Bedrock ao mod **Simple Voice Chat** (Java Edition) rodando no servidor SevenMC — sem precisar de PC, apenas pelo celular.
 
@@ -84,5 +84,3 @@ Ou abrir no **Android Studio** → Build → Generate APK.
 | `INTERNET` | Conexão UDP com o servidor |
 
 ---
-
-*by rhyan57 • [dsc.gg/sevenmc7](https://dsc.gg/sevenmc7)*
