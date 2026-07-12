@@ -56,18 +56,6 @@ android {
     }
 }
 
-repositories {
-    maven("https://repo.opencollab.dev/main/") {
-        name = "opencollab"
-    }
-    maven("https://repo.opencollab.dev/maven-snapshots/") {
-        name = "opencollab-snapshots"
-    }
-    maven("https://maven.lenni0451.net/releases") {
-        name = "lenni0451"
-    }
-}
-
 dependencies {
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.appcompat:appcompat:1.6.1")
