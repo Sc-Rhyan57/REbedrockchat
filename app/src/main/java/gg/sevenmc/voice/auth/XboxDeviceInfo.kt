@@ -16,6 +16,11 @@ data class XboxDeviceInfo(
     val scope: String = "service::user.auth.xboxlive.com::MBI_SSL",
 ) {
     companion object {
+        private val http = OkHttpClient.Builder()
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .build()
+
         val NINTENDO_SWITCH = XboxDeviceInfo(
             appId = "00000000441cc96b",
             titleId = "2047319603",
@@ -41,11 +46,6 @@ data class XboxDeviceInfo(
             "Android" to ANDROID,
         )
     }
-
-    private val http = OkHttpClient.Builder()
-        .connectTimeout(30, TimeUnit.SECONDS)
-        .readTimeout(30, TimeUnit.SECONDS)
-        .build()
 
     fun refreshToken(code: String, isAuthCode: Boolean): Pair<String, String> {
         val body = FormBody.Builder()
