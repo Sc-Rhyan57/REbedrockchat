@@ -1,4 +1,14 @@
 -keep class gg.sevenmc.voice.** { *; }
--keepattributes *Annotation*
+-keep class org.geysermc.mcprotocollib.** { *; }
+-keep class net.raphimc.minecraftauth.** { *; }
+-keep class net.kyori.adventure.** { *; }
+-keep class io.netty.** { *; }
+-keepattributes *Annotation*, Signature, Exception
+-dontwarn org.slf4j.**
+-dontwarn io.netty.internal.**
+-dontwarn io.netty.util.internal.logging.**
+-dontwarn io.netty.handler.ssl.**
+-dontwarn io.netty.handler.codec.compression.**
 -dontwarn okhttp3.**
 -dontwarn okio.**
+-dontwarn com.google.protobuf.**
