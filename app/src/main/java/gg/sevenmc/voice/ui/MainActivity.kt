@@ -134,11 +134,14 @@ class MainActivity : AppCompatActivity() {
         val intent = Intent(this, VoiceChatService::class.java).apply {
             action = VoiceChatService.ACTION_CONNECT
             putExtra(VoiceChatService.EXTRA_HOST, entry.host)
-            putExtra(VoiceChatService.EXTRA_VOICE_PORT, entry.voicePort)
-            putExtra(VoiceChatService.EXTRA_SECRET, entry.secret)
+            putExtra(VoiceChatService.EXTRA_PORT, entry.port)
             putExtra(VoiceChatService.EXTRA_SERVER_NAME, entry.name)
-            authManager.getSavedProfile()?.xuid?.let {
-                putExtra(VoiceChatService.EXTRA_PLAYER_UUID, it)
+            val profile = authManager.getSavedProfile()
+            if (profile != null) {
+                putExtra(VoiceChatService.EXTRA_MS_TOKEN, profile.accessToken)
+            } else {
+                putExtra(VoiceChatService.EXTRA_VOICE_PORT, entry.voicePort)
+                putExtra(VoiceChatService.EXTRA_SECRET, entry.secret)
             }
         }
         startService(intent)
