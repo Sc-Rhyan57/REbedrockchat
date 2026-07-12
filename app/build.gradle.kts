@@ -69,13 +69,13 @@ dependencies {
     implementation("androidx.datastore:datastore-preferences:1.0.0")
     implementation("androidx.multidex:multidex:2.0.1")
 
-    implementation("org.geysermc.mcprotocollib:protocol:1.21.4-1") {
+    implementation("org.geysermc.mcprotocollib:protocol:1.21.4-SNAPSHOT") {
         exclude(group = "io.netty", module = "netty-transport-native-epoll")
         exclude(group = "io.netty", module = "netty-transport-native-kqueue")
         exclude(group = "io.netty.incubator", module = "netty-incubator-transport-native-io_uring")
     }
 
-    implementation("net.raphimc:MinecraftAuth:4.0.5") {
+    implementation("net.raphimc:MinecraftAuth:5.0.1") {
         exclude(group = "org.slf4j")
     }
 
