@@ -18,6 +18,9 @@ import gg.sevenmc.voice.network.ConnectionState
 import gg.sevenmc.voice.network.VoiceChatConnection
 import gg.sevenmc.voice.overlay.OverlayService
 import gg.sevenmc.voice.ui.MainActivity
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 
 class VoiceChatService : Service() {
 
@@ -140,7 +143,7 @@ class VoiceChatService : Service() {
             if (!isDeafened) playback.playFrame(pcm)
         }
 
-        kotlinx.coroutines.GlobalScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+        GlobalScope.launch(Dispatchers.IO) {
             voice.connect()
         }
     }
