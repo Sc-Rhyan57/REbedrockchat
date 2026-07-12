@@ -4,6 +4,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import net.raphimc.minecraftauth.MinecraftAuth
 import net.raphimc.minecraftauth.java.JavaAuthManager
+import net.raphimc.minecraftauth.msa.model.MsaCredentials
+import net.raphimc.minecraftauth.msa.service.impl.CredentialsMsaAuthService
 import org.geysermc.mcprotocollib.auth.GameProfile
 import java.util.UUID
 
@@ -17,11 +19,14 @@ class MinecraftAuthBridge {
     suspend fun getCredentials(msAccessToken: String): Result<JavaCredentials> = withContext(Dispatchers.IO) {
         runCatching {
             val httpClient = MinecraftAuth.createHttpClient()
-            val authManager = JavaAuthManager(httpClient)
-            val result = authManager.loginWithMsa(msAccessToken)
+            
+            val authManager = JavaAuthManager.create(httpClient).login(
+                ::CredentialsMsaAuthService,
+                MsaCredentials(msAccessToken, "")
+            )
 
-            val mcProfile = result.getMinecraftProfile()
-            val mcToken = result.getMinecraftToken()
+            val mcProfile = authManager.minecraftProfile.upToDate
+            val mcToken = authManager.minecraftToken.upToDate
 
             val profile = GameProfile(
                 parseUUID(mcProfile.id.toString()),
