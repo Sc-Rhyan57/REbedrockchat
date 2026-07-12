@@ -1,99 +1,119 @@
 package gg.sevenmc.voice.ui
 
-import android.content.ClipData
-import android.content.ClipboardManager
+import android.app.Activity
 import android.content.Context
-import android.content.Intent
-import android.net.Uri
+import android.content.SharedPreferences
 import android.os.Bundle
-import android.view.View
+import android.view.ViewGroup
+import android.widget.FrameLayout
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.lifecycleScope
-import gg.sevenmc.voice.auth.XboxAuthManager
-import gg.sevenmc.voice.databinding.ActivityLoginBinding
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import gg.sevenmc.voice.auth.AuthWebView
+import gg.sevenmc.voice.auth.XboxDeviceInfo
+import gg.sevenmc.voice.auth.fetchIdentityToken
+import gg.sevenmc.voice.constructors.AccountManager
+import kotlin.concurrent.thread
 
 class LoginActivity : AppCompatActivity() {
 
-    private lateinit var binding: ActivityLoginBinding
-    private lateinit var authManager: XboxAuthManager
-    private var polling = false
+    private lateinit var prefs: SharedPreferences
+    private var webView: AuthWebView? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityLoginBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-        authManager = XboxAuthManager(this)
 
-        binding.btnBack.setOnClickListener { finish() }
-        binding.btnStartLogin.setOnClickListener { startDeviceCodeFlow() }
-        binding.tvUserCode.setOnClickListener {
-            val code = binding.tvUserCode.text.toString()
-            val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-            clipboard.setPrimaryClip(ClipData.newPlainText("Xbox Code", code))
-            Toast.makeText(this, "Código copiado!", Toast.LENGTH_SHORT).show()
-        }
-        binding.btnOpenBrowser.setOnClickListener {
-            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://microsoft.com/link")))
-        }
-    }
+        prefs = getSharedPreferences("seven_auth", Context.MODE_PRIVATE)
+        AccountManager.init(this)
 
-    private fun startDeviceCodeFlow() {
-        binding.btnStartLogin.isEnabled = false
-        binding.progressLogin.visibility = View.VISIBLE
-        binding.layoutCodeInfo.visibility = View.GONE
+        webView = AuthWebView(this).apply {
+            layoutParams = FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
+            deviceInfo = XboxDeviceInfo.ANDROID
+            callback = { success ->
+                if (success) {
+                    val account = AccountManager.selectedAccount
+                    if (account != null) {
+                        runOnUiThread { webView?.showLoadingPage("Autenticando com Xbox...") }
+                        thread {
+                            try {
+                                val (accessToken, newRefreshToken) = account.deviceInfo.refreshToken(
+                                    account.refreshToken,
+                                    isAuthCode = false
+                                )
 
-        lifecycleScope.launch {
-            val result = authManager.requestDeviceCode()
-            result.onSuccess { deviceCode ->
-                withContext(Dispatchers.Main) {
-                    binding.tvUserCode.text = deviceCode.userCode
-                    binding.tvVerificationUrl.text = deviceCode.verificationUri
-                    binding.layoutCodeInfo.visibility = View.VISIBLE
-                    binding.progressLogin.visibility = View.GONE
-                    binding.tvStatusLogin.text = "Aguardando autorização..."
-                }
-                pollForToken(deviceCode.deviceCode, deviceCode.interval)
-            }.onFailure {
-                withContext(Dispatchers.Main) {
-                    binding.progressLogin.visibility = View.GONE
-                    binding.btnStartLogin.isEnabled = true
-                    Toast.makeText(this@LoginActivity, "Erro ao iniciar login. Verifique sua conexão.", Toast.LENGTH_LONG).show()
-                }
-            }
-        }
-    }
+                                val identityToken = fetchIdentityToken(accessToken, account.deviceInfo)
 
-    private fun pollForToken(deviceCode: String, intervalSec: Int) {
-        polling = true
-        lifecycleScope.launch(Dispatchers.IO) {
-            while (polling) {
-                delay(intervalSec * 1000L)
-                val result = authManager.pollForToken(deviceCode)
-                val token = result.getOrNull()
-                if (token != null) {
-                    val profileResult = authManager.authenticateWithXbox(token)
-                    withContext(Dispatchers.Main) {
-                        profileResult.onSuccess { profile ->
-                            Toast.makeText(this@LoginActivity, "Bem-vindo, ${profile.gamertag}!", Toast.LENGTH_SHORT).show()
-                            finish()
-                        }.onFailure {
-                            binding.tvStatusLogin.text = "Erro ao buscar perfil Xbox."
-                            binding.btnStartLogin.isEnabled = true
+                                val gamertag = extractGamertagFromToken(identityToken.token)
+                                    ?: account.remark
+
+                                prefs.edit()
+                                    .putString("gamertag", gamertag)
+                                    .putString("identity_token", identityToken.token)
+                                    .putString("refresh_token", newRefreshToken)
+                                    .putString("user_hash", extractUhsFromToken(identityToken.token))
+                                    .putLong("expires_at", identityToken.notAfter * 1000L)
+                                    .apply()
+
+                                runOnUiThread {
+                                    Toast.makeText(
+                                        this@LoginActivity,
+                                        "Bem-vindo, $gamertag!",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                    setResult(Activity.RESULT_OK)
+                                    finish()
+                                }
+                            } catch (e: Exception) {
+                                runOnUiThread {
+                                    webView?.loadErrorPage("Falha ao autenticar: ${e.message}")
+                                }
+                            }
                         }
+                    } else {
+                        setResult(Activity.RESULT_CANCELED)
+                        finish()
                     }
-                    polling = false
+                } else {
+                    setResult(Activity.RESULT_CANCELED)
+                    finish()
                 }
             }
         }
+
+        setContentView(FrameLayout(this).apply { addView(webView) })
+        webView?.addAccount()
     }
 
-    override fun onDestroy() {
-        polling = false
-        super.onDestroy()
+    private fun extractUhsFromToken(identityToken: String): String {
+        return try {
+            identityToken.substringAfter("x=").substringBefore(";")
+        } catch (_: Exception) {
+            ""
+        }
+    }
+
+    private fun extractGamertagFromToken(identityToken: String): String? {
+        return try {
+            val xstsToken = identityToken.substringAfter(";")
+            val parts = xstsToken.split(".")
+            if (parts.size < 2) return null
+            val decoded = gg.sevenmc.voice.auth.base64Decode(parts[1]).toString(Charsets.UTF_8)
+            val json = org.json.JSONObject(decoded)
+            val xui = json.optJSONObject("DisplayClaims")
+                ?.optJSONArray("xui")
+                ?.optJSONObject(0)
+            xui?.optString("gtg")?.takeIf { it.isNotEmpty() }
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    @Deprecated("Use OnBackPressedDispatcher")
+    override fun onBackPressed() {
+        setResult(Activity.RESULT_CANCELED)
+        @Suppress("DEPRECATION")
+        super.onBackPressed()
     }
 }
